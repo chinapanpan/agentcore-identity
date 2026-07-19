@@ -9,10 +9,12 @@ AgentCore Gateway 拦截器 Lambda (Demo A — 基于拦截器的 Tool 级鉴权
   - REQUEST: 在 gateway 调 target 之前跑。对 tools/call, 若该 group 无权限调用目标 tool,
     返回 transformedGatewayResponse (JSON-RPC error) → gateway 直接短路响应, 不调 target (=DENY)。
     否则返回 transformedGatewayRequest 放行。
-  - RESPONSE: target 返回后跑。对 tools/list 结果按 group 过滤无权限的 tool (不可见)。
+  - RESPONSE: target 返回后跑。对 tools/list 结果按 group 过滤无权限的 tool (不可见);
+    同时过滤 result.structuredContent.tools (语义搜索/search 路径), 否则无权限工具会从该路径泄漏。
 
 fail-closed: 任何异常 / 无 token / 无法解析 → 一律 DENY。
 passRequestHeaders 必须在 gateway 配为 true。
+本地单测见 interceptor_unit_test.py (合成 payload, 免部署)。
 """
 import base64
 import json
@@ -45,7 +47,8 @@ def _allowed_tools_for(groups):
 
 
 def _strip_tool(name):
-    return name[name.index(DELIM) + len(DELIM):] if DELIM in name else name
+    # 工具名格式 <target>___<tool>; 取第一个 ___ 之后作为 tool 名 (兼容 tool 名本身含 ___)
+    return name.split(DELIM, 1)[1] if DELIM in name else name
 
 
 def _get_header(headers, name):
@@ -107,8 +110,18 @@ def _handle_response(mcp):
     groups = _decode_jwt_groups(_get_header(headers, "Authorization")) or []
     allowed = _allowed_tools_for(groups)
     result = resp_body.get("result") or {}
-    tools = result.get("tools", [])
-    result["tools"] = [t for t in tools if _strip_tool(t.get("name", "")) in allowed]
+
+    def _filter(tools):
+        return [t for t in (tools or []) if _strip_tool(t.get("name", "")) in allowed]
+
+    # 过滤标准 tools/list 结果
+    if "tools" in result:
+        result["tools"] = _filter(result.get("tools"))
+    # ★同时过滤语义搜索 / structuredContent 路径下的工具列表, 否则无权限工具会从这里泄漏
+    sc = result.get("structuredContent")
+    if isinstance(sc, dict) and "tools" in sc:
+        sc["tools"] = _filter(sc.get("tools"))
+        result["structuredContent"] = sc
     resp_body["result"] = result
     return _pass_response(status, resp_body)
 
