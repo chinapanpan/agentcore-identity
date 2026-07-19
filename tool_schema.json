@@ -1,0 +1,37 @@
+[
+  {
+    "name": "get_token_price",
+    "description": "查询指定加密货币的当前美元价格 (演示 mock 行情)。所有用户组均可调用。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "symbol": {"type": "string", "description": "币种符号, 如 BTC / ETH / SOL / OKB / USDT"}
+      },
+      "required": ["symbol"]
+    }
+  },
+  {
+    "name": "calc_impermanent_loss",
+    "description": "根据价格变动比计算流动性做市的无常损失百分比。仅 analyst 与 trader 组可调用。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "price_ratio": {"type": "number", "description": "价格变动比 r (新价/初始价), 需 > 0"}
+      },
+      "required": ["price_ratio"]
+    }
+  },
+  {
+    "name": "place_order",
+    "description": "提交一笔下单 (纯演示 mock, 零副作用, 不触达真实交易所)。仅 trader 组可调用。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "symbol": {"type": "string", "description": "交易对基础币种, 如 BTC"},
+        "side": {"type": "string", "description": "buy 或 sell"},
+        "qty": {"type": "number", "description": "下单数量"}
+      },
+      "required": ["symbol", "side", "qty"]
+    }
+  }
+]

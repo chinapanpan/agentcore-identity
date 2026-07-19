@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 560" font-family="'Segoe UI',system-ui,sans-serif">
+  <rect width="940" height="560" fill="#f8fafc"/>
+  <text x="470" y="36" text-anchor="middle" font-size="21" font-weight="700" fill="#0f172a">Tool 级权限矩阵 — 正反用例实测结果</text>
+  <text x="470" y="58" text-anchor="middle" font-size="12.5" fill="#64748b">直连 Gateway MCP endpoint 用各用户 JWT 调 tools/call (绕过 LLM 非确定性) · 两种机制结果完全一致</text>
+
+  <!-- table -->
+  <g font-size="13">
+    <!-- header -->
+    <rect x="60" y="90" width="200" height="46" fill="#1e293b"/>
+    <rect x="260" y="90" width="200" height="46" fill="#334155"/>
+    <rect x="460" y="90" width="220" height="46" fill="#334155"/>
+    <rect x="680" y="90" width="200" height="46" fill="#334155"/>
+    <text x="160" y="118" text-anchor="middle" fill="#fff" font-weight="700">用户 / 用户组</text>
+    <text x="360" y="112" text-anchor="middle" fill="#fff" font-weight="700" font-size="12">get_token_price</text>
+    <text x="360" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">所有用户</text>
+    <text x="570" y="112" text-anchor="middle" fill="#fff" font-weight="700" font-size="12">calc_impermanent_loss</text>
+    <text x="570" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">analyst + trader</text>
+    <text x="780" y="112" text-anchor="middle" fill="#fff" font-weight="700" font-size="12">place_order</text>
+    <text x="780" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">仅 trader (mock)</text>
+
+    <!-- row readonly -->
+    <rect x="60" y="136" width="200" height="70" fill="#fff" stroke="#e2e8f0"/>
+    <text x="160" y="168" text-anchor="middle" font-weight="600" fill="#0f172a">readonly-user</text>
+    <text x="160" y="188" text-anchor="middle" font-size="11" fill="#64748b">组: readonly</text>
+    <rect x="260" y="136" width="200" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="360" y="178" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+    <rect x="460" y="136" width="220" height="70" fill="#fee2e2" stroke="#e2e8f0"/>
+    <text x="570" y="178" text-anchor="middle" font-size="20" fill="#b91c1c">✕ DENIED</text>
+    <rect x="680" y="136" width="200" height="70" fill="#fee2e2" stroke="#e2e8f0"/>
+    <text x="780" y="178" text-anchor="middle" font-size="20" fill="#b91c1c">✕ DENIED</text>
+
+    <!-- row analyst -->
+    <rect x="60" y="206" width="200" height="70" fill="#fff" stroke="#e2e8f0"/>
+    <text x="160" y="238" text-anchor="middle" font-weight="600" fill="#0f172a">analyst-user</text>
+    <text x="160" y="258" text-anchor="middle" font-size="11" fill="#64748b">组: analyst</text>
+    <rect x="260" y="206" width="200" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="360" y="248" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+    <rect x="460" y="206" width="220" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="570" y="248" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+    <rect x="680" y="206" width="200" height="70" fill="#fee2e2" stroke="#e2e8f0"/>
+    <text x="780" y="248" text-anchor="middle" font-size="20" fill="#b91c1c">✕ DENIED</text>
+
+    <!-- row trader -->
+    <rect x="60" y="276" width="200" height="70" fill="#fff" stroke="#e2e8f0"/>
+    <text x="160" y="308" text-anchor="middle" font-weight="600" fill="#0f172a">trader-user</text>
+    <text x="160" y="328" text-anchor="middle" font-size="11" fill="#64748b">组: trader</text>
+    <rect x="260" y="276" width="200" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="360" y="318" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+    <rect x="460" y="276" width="220" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="570" y="318" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+    <rect x="680" y="276" width="200" height="70" fill="#dcfce7" stroke="#e2e8f0"/>
+    <text x="780" y="318" text-anchor="middle" font-size="20" fill="#15803d">✓ ALLOW</text>
+  </g>
+
+  <!-- deny signatures -->
+  <rect x="60" y="376" width="400" height="140" rx="8" fill="#fff" stroke="#0ea5e9" stroke-width="1.5"/>
+  <text x="80" y="400" font-size="13" font-weight="700" fill="#0369a1">机制 A · 拦截器 DENY 返回</text>
+  <text x="80" y="424" font-size="10.5" fill="#334155" font-family="monospace">error.code = -32001</text>
+  <text x="80" y="444" font-size="10" fill="#64748b" font-family="monospace">"AUTHZ DENIED: groups ['readonly']</text>
+  <text x="80" y="459" font-size="10" fill="#64748b" font-family="monospace"> may not call tool 'place_order'"</text>
+  <text x="80" y="484" font-size="10.5" fill="#334155">tools/list 亦按组过滤: 无权工具不可见</text>
+  <text x="80" y="504" font-size="10.5" fill="#334155">无/坏 token → 401 (入站授权器, fail-closed)</text>
+
+  <rect x="480" y="376" width="400" height="140" rx="8" fill="#fff" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="500" y="400" font-size="13" font-weight="700" fill="#15803d">机制 B · Cedar DENY 返回</text>
+  <text x="500" y="424" font-size="10.5" fill="#334155" font-family="monospace">error.code = -32002</text>
+  <text x="500" y="444" font-size="10" fill="#64748b" font-family="monospace">"Tool Execution Denied: policy</text>
+  <text x="500" y="459" font-size="10" fill="#64748b" font-family="monospace"> enforcement [No policy applies to</text>
+  <text x="500" y="474" font-size="10" fill="#64748b" font-family="monospace"> the request (denied by default)]"</text>
+  <text x="500" y="499" font-size="10.5" fill="#334155">默认拒绝 · forbid 覆盖 permit · 引擎托管</text>
+</svg>

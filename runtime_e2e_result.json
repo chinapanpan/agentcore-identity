@@ -1,0 +1,59 @@
+{
+  "runtime_e2e": [
+    {
+      "user": "trader-user",
+      "prompt": "帮我查 BTC 价格, 再市价买入 0.01 BTC",
+      "identity": {
+        "username": "trader-user",
+        "groups": [
+          "trader"
+        ]
+      },
+      "visible_tools": [
+        "defi___calc_impermanent_loss",
+        "defi___get_token_price",
+        "defi___place_order"
+      ],
+      "tools_called": [
+        "place_order",
+        "get_token_price"
+      ],
+      "answer": "完成！以下是结果：\n\n**BTC 价格查询：**\n- 当前价格：**$64,250 USD**\n- 数据来源：OKX 演示行情\n\n**买入订单：**\n- 状态：✅ 演示订单已接受\n- 交易对：BTC\n- 方向：买入\n- 数量：0.01 BTC\n- 预计花费：约 $642.50 USD\n\n⚠️ **提示**：这是演示 mock 下单，未触达任何真实交易系统。如需真实交易，请在 OKX 官方平台操作。\n"
+    },
+    {
+      "user": "analyst-user",
+      "prompt": "计算价格变动比为 4 时的无常损失; 顺便帮我下单买 BTC",
+      "identity": {
+        "username": "analyst-user",
+        "groups": [
+          "analyst"
+        ]
+      },
+      "visible_tools": [
+        "defi___calc_impermanent_loss",
+        "defi___get_token_price"
+      ],
+      "tools_called": [
+        "calc_impermanent_loss"
+      ],
+      "answer": "**无常损失计算结果：**\n\n当价格变动比为 **4**（即新价格是初始价格的4倍）时：\n- **无常损失：-20%**\n\n这意味着相比直接持有资产，在流动性池中做市会损失 20% 的价值。这是因为当一种代币价格上升时，自动做市商机制会导致你持有该代币的数量减少。\n\n---\n\n**关于下单买 BTC：**\n\n很遗憾，我目前无法帮你下单。我的权限仅限于：\n- 📊 查询加密货币价格\n- 📈 计算无常损失等分析工具\n\n**下单交易需要通过 OKX 交易所的官方平台操作。** 我可以先帮你查询 BTC 的当前价格，供你参考决策：\n\n需要我查询 BTC 的实时价格吗？\n"
+    },
+    {
+      "user": "readonly-user",
+      "prompt": "帮我查 ETH 价格; 再帮我下单买点 BTC",
+      "identity": {
+        "username": "readonly-user",
+        "groups": [
+          "readonly"
+        ]
+      },
+      "visible_tools": [
+        "defi___get_token_price"
+      ],
+      "tools_called": [
+        "get_token_price"
+      ],
+      "answer": "**ETH 当前价格：** 💰 **$3,120.5 USD**\n\n---\n\n关于 **下单买 BTC** 的请求：\n\n❌ **您暂无权限执行此操作**\n\n您当前用户组为 `readonly`（只读权限），只能查询行情信息，**无法进行交易操作**。下单买入需要更高的权限等级。\n\n如需进行交易，请联系管理员升级您的权限。\n\n如果您还想查询 BTC 或其他币种的价格，我很乐意为您服务！😊\n"
+    }
+  ]
+}

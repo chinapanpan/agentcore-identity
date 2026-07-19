@@ -1,0 +1,25 @@
+# 部署时生成的中间配置 (含真实账号/资源 ID) — 不提交
+cognito_ids.env
+authz.json
+rt-authz.json
+rt-header.json
+peconfig.json
+interceptors.json
+credcfg.json
+targetcfg.json
+def.json
+gw-policy.json
+gw-trust.json
+lambda-trust.json
+rt-trust.json
+rt-policy.json
+
+# 构建产物
+*.zip
+*.log
+build*.log
+__pycache__/
+*.pyc
+def_test.json
+def_test2.json
+defg.json

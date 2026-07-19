@@ -1,0 +1,172 @@
+{
+  "mechanism": "interceptor",
+  "gateway_url": "https://<GATEWAY_A_INTERCEPTOR>.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
+  "matrix": {
+    "readonly-user": {
+      "get_token_price": "ALLOW",
+      "calc_impermanent_loss": "DENIED",
+      "place_order": "DENIED"
+    },
+    "analyst-user": {
+      "get_token_price": "ALLOW",
+      "calc_impermanent_loss": "ALLOW",
+      "place_order": "DENIED"
+    },
+    "trader-user": {
+      "get_token_price": "ALLOW",
+      "calc_impermanent_loss": "ALLOW",
+      "place_order": "ALLOW"
+    }
+  },
+  "tools_list": {
+    "readonly-user": [
+      "get_token_price"
+    ],
+    "analyst-user": [
+      "calc_impermanent_loss",
+      "get_token_price"
+    ],
+    "trader-user": [
+      "calc_impermanent_loss",
+      "get_token_price",
+      "place_order"
+    ]
+  },
+  "raw": {
+    "readonly-user": {
+      "get_token_price": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"symbol\":\"BTC\",\"price_usd\":64250.0,\"source\":\"okx-demo-mock\"}"
+              }
+            ]
+          }
+        }
+      },
+      "calc_impermanent_loss": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "error": {
+            "code": -32001,
+            "message": "AUTHZ DENIED: groups ['readonly'] may not call tool 'calc_impermanent_loss'"
+          }
+        }
+      },
+      "place_order": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "error": {
+            "code": -32001,
+            "message": "AUTHZ DENIED: groups ['readonly'] may not call tool 'place_order'"
+          }
+        }
+      }
+    },
+    "analyst-user": {
+      "get_token_price": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"symbol\":\"BTC\",\"price_usd\":64250.0,\"source\":\"okx-demo-mock\"}"
+              }
+            ]
+          }
+        }
+      },
+      "calc_impermanent_loss": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"price_ratio\":2.0,\"impermanent_loss_pct\":-5.7191,\"note\":\"相对持有的无常损失(负数=损失)\"}"
+              }
+            ]
+          }
+        }
+      },
+      "place_order": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "error": {
+            "code": -32001,
+            "message": "AUTHZ DENIED: groups ['analyst'] may not call tool 'place_order'"
+          }
+        }
+      }
+    },
+    "trader-user": {
+      "get_token_price": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"symbol\":\"BTC\",\"price_usd\":64250.0,\"source\":\"okx-demo-mock\"}"
+              }
+            ]
+          }
+        }
+      },
+      "calc_impermanent_loss": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"price_ratio\":2.0,\"impermanent_loss_pct\":-5.7191,\"note\":\"相对持有的无常损失(负数=损失)\"}"
+              }
+            ]
+          }
+        }
+      },
+      "place_order": {
+        "http": 200,
+        "payload": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "isError": false,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\":\"MOCK_ACCEPTED\",\"order\":{\"symbol\":\"BTC\",\"side\":\"buy\",\"qty\":0.01},\"warning\":\"这是演示 mock 下单, 未触达任何真实交易系统\"}"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

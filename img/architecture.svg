@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 640" font-family="'Segoe UI',system-ui,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#059669"/>
+    </marker>
+    <marker id="arrd" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect width="980" height="640" fill="#f8fafc"/>
+  <text x="490" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">AgentCore Identity 全流程鉴权架构 (OKX Demo)</text>
+  <text x="490" y="58" text-anchor="middle" font-size="13" fill="#64748b">用户身份(Cognito JWT) 一路透传, Tool 级授权在 Gateway 侧 — 两种机制</text>
+
+  <!-- Cognito -->
+  <rect x="40" y="100" width="180" height="120" rx="10" fill="#fff" stroke="#f59e0b" stroke-width="2"/>
+  <text x="130" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#b45309">Amazon Cognito</text>
+  <text x="130" y="148" text-anchor="middle" font-size="11" fill="#334155">User Pool + 用户组</text>
+  <text x="130" y="168" text-anchor="middle" font-size="11" fill="#334155">readonly / analyst / trader</text>
+  <text x="130" y="190" text-anchor="middle" font-size="10.5" fill="#64748b">签发 JWT (含 cognito:groups</text>
+  <text x="130" y="205" text-anchor="middle" font-size="10.5" fill="#64748b">+ username)</text>
+
+  <!-- User -->
+  <circle cx="130" cy="300" r="20" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+  <path d="M110,340 a20,20 0 0,1 40,0" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+  <text x="130" y="372" text-anchor="middle" font-size="12" font-weight="600" fill="#0f172a">C 端用户</text>
+  <text x="130" y="388" text-anchor="middle" font-size="10.5" fill="#64748b">携带自己的 Bearer JWT</text>
+
+  <!-- Runtime -->
+  <rect x="320" y="250" width="200" height="150" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+  <text x="420" y="276" text-anchor="middle" font-size="15" font-weight="700" fill="#1d4ed8">AgentCore Runtime</text>
+  <text x="420" y="297" text-anchor="middle" font-size="11" fill="#334155">Strands Agent</text>
+  <rect x="338" y="308" width="164" height="34" rx="6" fill="#eff6ff"/>
+  <text x="420" y="323" text-anchor="middle" font-size="10" fill="#1e40af">① 入站 JWT authorizer</text>
+  <text x="420" y="337" text-anchor="middle" font-size="10" fill="#1e40af">(customJWTAuthorizer)</text>
+  <rect x="338" y="348" width="164" height="42" rx="6" fill="#ecfdf5"/>
+  <text x="420" y="363" text-anchor="middle" font-size="10" fill="#047857">② allowlist Authorization</text>
+  <text x="420" y="377" text-anchor="middle" font-size="10" fill="#047857">→ 透传【原始用户 JWT】</text>
+
+  <!-- Gateway -->
+  <rect x="620" y="120" width="320" height="410" rx="12" fill="#fbfcff" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="780" y="146" text-anchor="middle" font-size="15" font-weight="700" fill="#6d28d9">AgentCore Gateway (MCP)</text>
+  <text x="780" y="165" text-anchor="middle" font-size="10.5" fill="#64748b">CUSTOM_JWT 入站 · 同一 Cognito pool</text>
+
+  <!-- Demo A interceptor -->
+  <rect x="640" y="180" width="280" height="120" rx="8" fill="#fff" stroke="#0ea5e9" stroke-width="1.6"/>
+  <text x="780" y="202" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">机制 A · 拦截器 Interceptor</text>
+  <text x="780" y="222" text-anchor="middle" font-size="10.5" fill="#334155">REQUEST 拦截器: 读 groups → 越权</text>
+  <text x="780" y="237" text-anchor="middle" font-size="10.5" fill="#334155">tools/call 返 403 短路</text>
+  <text x="780" y="256" text-anchor="middle" font-size="10.5" fill="#334155">RESPONSE 拦截器: 按 groups 过滤</text>
+  <text x="780" y="271" text-anchor="middle" font-size="10.5" fill="#334155">tools/list</text>
+  <text x="780" y="290" text-anchor="middle" font-size="10" fill="#0369a1">自写 Lambda · 灵活</text>
+
+  <!-- Demo B cedar -->
+  <rect x="640" y="315" width="280" height="115" rx="8" fill="#fff" stroke="#16a34a" stroke-width="1.6"/>
+  <text x="780" y="337" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">机制 B · Cedar Policy Engine</text>
+  <text x="780" y="357" text-anchor="middle" font-size="10.5" fill="#334155">policyEngineConfiguration ENFORCE</text>
+  <text x="780" y="374" text-anchor="middle" font-size="10.5" fill="#334155">permit/forbid · principal.getTag</text>
+  <text x="780" y="391" text-anchor="middle" font-size="10.5" fill="#334155">action=defi___&lt;tool&gt;</text>
+  <text x="780" y="410" text-anchor="middle" font-size="10" fill="#15803d">声明式 · 默认拒绝 · 可审计</text>
+
+  <!-- Lambda target -->
+  <rect x="660" y="450" width="240" height="62" rx="8" fill="#fff" stroke="#ea580c" stroke-width="1.6"/>
+  <text x="780" y="472" text-anchor="middle" font-size="12.5" font-weight="700" fill="#c2410c">Lambda Target "defi"</text>
+  <text x="780" y="491" text-anchor="middle" font-size="10" fill="#334155">get_token_price · calc_impermanent_loss</text>
+  <text x="780" y="505" text-anchor="middle" font-size="10" fill="#334155">place_order (mock)</text>
+
+  <!-- arrows -->
+  <line x1="130" y1="220" x2="130" y2="278" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="150" y="252" font-size="9.5" fill="#b45309">取 JWT</text>
+  <line x1="160" y1="320" x2="316" y2="330" stroke="#2563eb" stroke-width="2.4" marker-end="url(#arr)"/>
+  <text x="200" y="316" font-size="10" fill="#1d4ed8">Bearer JWT 调 Runtime</text>
+  <line x1="524" y1="360" x2="636" y2="300" stroke="#059669" stroke-width="2.4" marker-end="url(#arrg)"/>
+  <text x="530" y="345" font-size="10" fill="#047857">透传同一 JWT</text>
+  <line x1="780" y1="430" x2="780" y2="448" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="800" y="443" font-size="9.5" fill="#6d28d9">授权后调用</text>
+
+  <text x="40" y="600" font-size="11" fill="#334155">▲ 关键: agent <tspan font-weight="700">不另铸 M2M token</tspan>, 直接透传用户原始 JWT → cognito:groups/username 一路保留到 Gateway, 授权才是"按用户"。</text>
+  <text x="40" y="620" font-size="11" fill="#334155">▲ 反向用例用<tspan font-weight="700">直连 Gateway MCP</tspan> 验证 (绕过 LLM 非确定性): 无权限工具在 tools/call 被明确拒绝。</text>
+</svg>

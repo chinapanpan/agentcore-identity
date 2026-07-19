@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="'Segoe UI',system-ui,sans-serif">
+  <defs>
+    <marker id="m" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="mr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#f8fafc"/>
+  <text x="480" y="34" text-anchor="middle" font-size="21" font-weight="700" fill="#0f172a">身份令牌流转时序 — JWT 一路透传</text>
+
+  <!-- lifelines -->
+  <g font-size="12.5" font-weight="700" fill="#0f172a">
+    <rect x="40" y="60" width="120" height="40" rx="6" fill="#fff" stroke="#f59e0b" stroke-width="1.6"/>
+    <text x="100" y="85" text-anchor="middle">Cognito</text>
+    <rect x="250" y="60" width="120" height="40" rx="6" fill="#fff" stroke="#0f172a" stroke-width="1.6"/>
+    <text x="310" y="85" text-anchor="middle">C 端用户</text>
+    <rect x="470" y="60" width="130" height="40" rx="6" fill="#fff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="535" y="85" text-anchor="middle">Runtime</text>
+    <rect x="700" y="60" width="130" height="40" rx="6" fill="#fff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="765" y="85" text-anchor="middle">Gateway</text>
+  </g>
+  <g stroke="#cbd5e1" stroke-width="1.4" stroke-dasharray="4,4">
+    <line x1="100" y1="100" x2="100" y2="580"/>
+    <line x1="310" y1="100" x2="310" y2="580"/>
+    <line x1="535" y1="100" x2="535" y2="580"/>
+    <line x1="765" y1="100" x2="765" y2="580"/>
+  </g>
+
+  <!-- messages -->
+  <g font-size="11" fill="#1e293b">
+    <line x1="310" y1="135" x2="104" y2="135" stroke="#2563eb" stroke-width="1.8" marker-end="url(#m)"/>
+    <text x="200" y="128" text-anchor="middle">① 用户名/密码登录</text>
+    <line x1="100" y1="170" x2="306" y2="170" stroke="#2563eb" stroke-width="1.8" marker-end="url(#m)"/>
+    <text x="205" y="163" text-anchor="middle">② 返回 JWT (含 cognito:groups + username)</text>
+
+    <line x1="310" y1="215" x2="531" y2="215" stroke="#2563eb" stroke-width="2.2" marker-end="url(#m)"/>
+    <text x="420" y="208" text-anchor="middle">③ Bearer JWT 调 InvokeAgentRuntime</text>
+
+    <rect x="470" y="235" width="130" height="66" rx="5" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="535" y="255" text-anchor="middle" font-size="10" fill="#1e40af">④ 入站 JWT authorizer</text>
+    <text x="535" y="270" text-anchor="middle" font-size="10" fill="#1e40af">校验签名/issuer/client</text>
+    <text x="535" y="288" text-anchor="middle" font-size="10" fill="#047857">⑤ allowlist 取原始JWT</text>
+
+    <line x1="535" y1="330" x2="761" y2="330" stroke="#2563eb" stroke-width="2.2" marker-end="url(#m)"/>
+    <text x="650" y="323" text-anchor="middle">⑥ 透传【同一 JWT】调 tools/list</text>
+
+    <rect x="700" y="350" width="130" height="60" rx="5" fill="#f5f3ff" stroke="#c4b5fd"/>
+    <text x="765" y="370" text-anchor="middle" font-size="10" fill="#6d28d9">⑦ 按 groups/username</text>
+    <text x="765" y="384" text-anchor="middle" font-size="10" fill="#6d28d9">过滤/授权工具</text>
+    <text x="765" y="400" text-anchor="middle" font-size="10" fill="#6d28d9">(拦截器 or Cedar)</text>
+
+    <line x1="765" y1="435" x2="539" y2="435" stroke="#2563eb" stroke-width="1.8" marker-end="url(#m)"/>
+    <text x="650" y="428" text-anchor="middle">⑧ 仅返回有权限工具</text>
+
+    <line x1="535" y1="470" x2="761" y2="470" stroke="#2563eb" stroke-width="2.2" marker-end="url(#m)"/>
+    <text x="650" y="463" text-anchor="middle">⑨ tools/call (有权限)</text>
+    <line x1="765" y1="500" x2="539" y2="500" stroke="#16a34a" stroke-width="1.8" marker-end="url(#m)"/>
+    <text x="650" y="493" text-anchor="middle" fill="#15803d">⑩ ✓ 真实结果</text>
+
+    <line x1="535" y1="540" x2="761" y2="540" stroke="#dc2626" stroke-width="2.2" marker-end="url(#mr)"/>
+    <text x="650" y="533" text-anchor="middle" fill="#b91c1c">越权 tools/call (无权限)</text>
+    <line x1="765" y1="565" x2="539" y2="565" stroke="#dc2626" stroke-width="1.8" marker-end="url(#mr)"/>
+    <text x="650" y="558" text-anchor="middle" fill="#b91c1c">✕ DENIED (403 / policy)</text>
+  </g>
+
+  <text x="40" y="605" font-size="11" fill="#334155">★ 第 ⑥ 步是关键: agent <tspan font-weight="700" fill="#dc2626">不另铸 M2M token</tspan> — 直接透传用户原始 JWT, 身份(groups/username)才不丢失, Gateway 才能"按用户"授权。</text>
+</svg>
