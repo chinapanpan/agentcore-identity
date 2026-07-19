@@ -26,7 +26,7 @@ done
 
 echo "==> 3) 删除 Cedar 策略 + Policy Engine"
 if [ -n "${PE_ID:-}" ]; then
-  for PID in $(aws bedrock-agentcore-control list-policies $R --policy-engine-id "$PE_ID" --query 'items[].policyId' --output text 2>/dev/null); do
+  for PID in $(aws bedrock-agentcore-control list-policies $R --policy-engine-id "$PE_ID" --query 'policies[].policyId' --output text 2>/dev/null); do
     del aws bedrock-agentcore-control delete-policy $R --policy-engine-id "$PE_ID" --policy-id "$PID"
   done
   sleep 3
