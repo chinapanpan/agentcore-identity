@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#059669"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" fill="#f8fafc"/>
+  <text x="480" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">Cognito 自定义字段注入流程：custom:role_id → JWT 的 role_id claim</text>
+  <text x="480" y="62" text-anchor="middle" font-size="13" fill="#64748b">Pre Token Generation Lambda 触发器 (V2_0 事件) 把用户目录里的属性映射成 access token 的自定义 claim</text>
+
+  <!-- Step 1: user directory -->
+  <rect x="40" y="110" width="200" height="120" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="140" y="136" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">① Cognito 用户目录</text>
+  <text x="140" y="162" text-anchor="middle" font-size="12" fill="#334155">viewer-user</text>
+  <text x="140" y="182" text-anchor="middle" font-size="12" fill="#334155">custom:role_id = 1001</text>
+  <text x="140" y="206" text-anchor="middle" font-size="11" fill="#64748b">(自定义属性, 存在目录)</text>
+
+  <!-- Step 2: login -->
+  <rect x="300" y="110" width="180" height="120" rx="10" fill="#f0fdf4" stroke="#059669" stroke-width="1.5"/>
+  <text x="390" y="136" text-anchor="middle" font-size="14" font-weight="700" fill="#065f46">② 用户认证</text>
+  <text x="390" y="162" text-anchor="middle" font-size="12" fill="#334155">USER_PASSWORD_AUTH</text>
+  <text x="390" y="182" text-anchor="middle" font-size="12" fill="#334155">InitiateAuth</text>
+  <text x="390" y="206" text-anchor="middle" font-size="11" fill="#64748b">Cognito 准备签发令牌</text>
+
+  <!-- Step 3: pretoken lambda -->
+  <rect x="540" y="90" width="380" height="160" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="730" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">③ Pre Token Generation Lambda (V2_0) ★关键</text>
+  <text x="730" y="140" text-anchor="middle" font-size="11.5" fill="#334155">读 event.request.userAttributes["custom:role_id"]</text>
+  <rect x="560" y="152" width="340" height="82" rx="6" fill="#fffbeb" stroke="#f59e0b" stroke-width="1"/>
+  <text x="574" y="172" font-size="10.5" font-family="monospace" fill="#78350f">response.claimsAndScopeOverrideDetails</text>
+  <text x="574" y="190" font-size="10.5" font-family="monospace" fill="#78350f">  .accessTokenGeneration</text>
+  <text x="574" y="208" font-size="10.5" font-family="monospace" fill="#78350f">  .claimsToAddOrOverride =</text>
+  <text x="574" y="226" font-size="10.5" font-family="monospace" fill="#b45309">      {"role_id": "1001"}</text>
+
+  <!-- Step 4: access token -->
+  <rect x="300" y="330" width="360" height="150" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+  <text x="480" y="356" text-anchor="middle" font-size="14" font-weight="700" fill="#3730a3">④ 签发的 Access Token (JWT payload)</text>
+  <rect x="320" y="370" width="320" height="96" rx="6" fill="#ffffff" stroke="#c7d2fe" stroke-width="1"/>
+  <text x="334" y="392" font-size="11" font-family="monospace" fill="#334155">{</text>
+  <text x="334" y="410" font-size="11" font-family="monospace" fill="#334155">  "token_use": "access",</text>
+  <text x="334" y="428" font-size="11" font-family="monospace" fill="#334155">  "client_id": "7ale...eq2",</text>
+  <text x="334" y="446" font-size="11" font-family="monospace" font-weight="700" fill="#059669">  "role_id": "1001",   ← 注入成功</text>
+  <text x="334" y="464" font-size="11" font-family="monospace" fill="#334155">}</text>
+
+  <!-- arrows -->
+  <line x1="240" y1="170" x2="296" y2="170" stroke="#2563eb" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="480" y1="170" x2="536" y2="170" stroke="#059669" stroke-width="2" marker-end="url(#arg)"/>
+  <path d="M730,250 L730,300 L480,300 L480,326" fill="none" stroke="#4f46e5" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="600" y="293" font-size="11" fill="#4f46e5">Cognito 应用覆盖并签发</text>
+
+  <text x="480" y="520" text-anchor="middle" font-size="12.5" fill="#475569">前置条件：User Pool 必须为 Essentials / Plus 功能层，触发器事件版本 = V2_0（access token 定制的要求）</text>
+  <text x="480" y="542" text-anchor="middle" font-size="12" fill="#64748b">自定义 claim 经 USER_PASSWORD_AUTH 也能带出（自定义 scope 则仅 OAuth 端点返回）</text>
+</svg>

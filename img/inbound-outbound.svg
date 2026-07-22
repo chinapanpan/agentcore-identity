@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 540" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="o" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#ea580c"/></marker>
+  </defs>
+  <rect width="980" height="540" fill="#f8fafc"/>
+  <text x="490" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">AgentCore Gateway：Inbound Auth 与 Outbound Auth</text>
+  <text x="490" y="62" text-anchor="middle" font-size="13" fill="#64748b">入站 = 谁能调用 Gateway（认证调用方）；出站 = Gateway 用什么身份去调 Target（认证到后端）</text>
+
+  <!-- caller -->
+  <rect x="30" y="150" width="170" height="150" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="115" y="182" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">调用方</text>
+  <text x="115" y="208" text-anchor="middle" font-size="12" fill="#334155">Runtime 上的 Agent</text>
+  <text x="115" y="228" text-anchor="middle" font-size="12" fill="#334155">(Strands MCPClient)</text>
+  <text x="115" y="256" text-anchor="middle" font-size="11" fill="#64748b">携带用户 access token</text>
+  <text x="115" y="274" text-anchor="middle" font-size="11" fill="#64748b">(含 role_id claim)</text>
+
+  <!-- gateway -->
+  <rect x="360" y="120" width="260" height="290" rx="12" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="490" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">AgentCore Gateway (MCP)</text>
+
+  <rect x="382" y="166" width="216" height="104" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="490" y="188" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">Inbound Auth</text>
+  <text x="490" y="208" text-anchor="middle" font-size="11.5" fill="#334155">CUSTOM_JWT authorizer</text>
+  <text x="490" y="226" text-anchor="middle" font-size="11" fill="#475569">校验 Cognito access token:</text>
+  <text x="490" y="243" text-anchor="middle" font-size="11" fill="#475569">签名 / iss / aud / client_id</text>
+  <text x="490" y="261" text-anchor="middle" font-size="11" fill="#b91c1c">不合法 → 401 (拦截器之前)</text>
+
+  <rect x="382" y="286" width="216" height="104" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+  <text x="490" y="308" text-anchor="middle" font-size="13" font-weight="700" fill="#9a3412">Outbound Auth</text>
+  <text x="490" y="328" text-anchor="middle" font-size="11.5" fill="#334155">Gateway 执行角色 (IAM)</text>
+  <text x="490" y="346" text-anchor="middle" font-size="11" fill="#475569">credentialProviderType =</text>
+  <text x="490" y="363" text-anchor="middle" font-size="11" font-family="monospace" fill="#9a3412">GATEWAY_IAM_ROLE</text>
+  <text x="490" y="381" text-anchor="middle" font-size="11" fill="#475569">lambda:InvokeFunction</text>
+
+  <!-- authz between -->
+  <rect x="382" y="120" width="216" height="0"/>
+  <text x="490" y="404" text-anchor="middle" font-size="10.5" fill="#64748b">(其间: 拦截器/Cedar 按 role_id 做 tool 级授权)</text>
+
+  <!-- target -->
+  <rect x="780" y="150" width="170" height="150" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+  <text x="865" y="182" text-anchor="middle" font-size="14" font-weight="700" fill="#9a3412">Target</text>
+  <text x="865" y="208" text-anchor="middle" font-size="12" fill="#334155">Lambda</text>
+  <text x="865" y="228" text-anchor="middle" font-size="12" fill="#334155">okx-ct-target</text>
+  <text x="865" y="256" text-anchor="middle" font-size="11" fill="#64748b">3 个 DeFi 工具</text>
+  <text x="865" y="274" text-anchor="middle" font-size="11" fill="#64748b">(工具本身不做鉴权)</text>
+
+  <!-- arrows -->
+  <line x1="200" y1="218" x2="356" y2="218" stroke="#2563eb" stroke-width="2.5" marker-end="url(#b)"/>
+  <text x="278" y="208" text-anchor="middle" font-size="11" font-weight="600" fill="#2563eb">Bearer token</text>
+  <line x1="620" y1="338" x2="776" y2="248" stroke="#ea580c" stroke-width="2.5" marker-end="url(#o)"/>
+  <text x="700" y="280" text-anchor="middle" font-size="11" font-weight="600" fill="#ea580c">IAM 角色调用</text>
+
+  <text x="490" y="452" text-anchor="middle" font-size="12" fill="#475569">要点：Lambda Target 的出站用 IAM 执行角色（最小权限，只 InvokeFunction 到具体函数）。</text>
+  <text x="490" y="474" text-anchor="middle" font-size="12" fill="#475569">若 Target 是 OpenAPI / 第三方 SaaS，则出站改用凭证提供者 / Token Vault（API Key、OAuth）。</text>
+  <text x="490" y="500" text-anchor="middle" font-size="12" fill="#64748b">用户身份（role_id）只在 Inbound + 授权阶段使用；Outbound 到 Lambda 用 Gateway 自己的服务身份。</text>
+</svg>

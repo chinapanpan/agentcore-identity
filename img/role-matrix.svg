@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <rect width="820" height="420" fill="#f8fafc"/>
+  <text x="410" y="40" text-anchor="middle" font-size="21" font-weight="700" fill="#0f172a">基于 role_id 的工具权限矩阵（实测）</text>
+  <text x="410" y="64" text-anchor="middle" font-size="12.5" fill="#64748b">拦截器与 Cedar 两种机制结果完全一致；直连 Gateway 对 tools/call 逐一实测</text>
+
+  <!-- header -->
+  <g font-size="13">
+    <rect x="60" y="90" width="220" height="46" fill="#1e293b"/>
+    <text x="170" y="118" text-anchor="middle" fill="#fff" font-weight="700">用户 (role_id)</text>
+    <rect x="280" y="90" width="170" height="46" fill="#1e293b"/>
+    <text x="365" y="112" text-anchor="middle" fill="#fff" font-weight="700">get_token_price</text>
+    <text x="365" y="128" text-anchor="middle" fill="#cbd5e1" font-size="10">查价</text>
+    <rect x="450" y="90" width="200" height="46" fill="#1e293b"/>
+    <text x="550" y="112" text-anchor="middle" fill="#fff" font-weight="700">calc_impermanent_loss</text>
+    <text x="550" y="128" text-anchor="middle" fill="#cbd5e1" font-size="10">算无常损失</text>
+    <rect x="650" y="90" width="110" height="46" fill="#1e293b"/>
+    <text x="705" y="112" text-anchor="middle" fill="#fff" font-weight="700">place_order</text>
+    <text x="705" y="128" text-anchor="middle" fill="#cbd5e1" font-size="10">下单</text>
+  </g>
+
+  <!-- rows -->
+  <g font-size="13">
+    <!-- viewer 1001 -->
+    <rect x="60" y="136" width="220" height="76" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="170" y="168" text-anchor="middle" font-weight="700" fill="#334155">viewer-user</text>
+    <text x="170" y="188" text-anchor="middle" fill="#64748b" font-size="12">role_id = 1001</text>
+    <rect x="280" y="136" width="170" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="365" y="180" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+    <rect x="450" y="136" width="200" height="76" fill="#fef2f2" stroke="#e2e8f0"/><text x="550" y="180" text-anchor="middle" font-size="20" fill="#dc2626">✕</text>
+    <rect x="650" y="136" width="110" height="76" fill="#fef2f2" stroke="#e2e8f0"/><text x="705" y="180" text-anchor="middle" font-size="20" fill="#dc2626">✕</text>
+
+    <!-- analyst 1002 -->
+    <rect x="60" y="212" width="220" height="76" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="170" y="244" text-anchor="middle" font-weight="700" fill="#334155">analyst-user</text>
+    <text x="170" y="264" text-anchor="middle" fill="#64748b" font-size="12">role_id = 1002</text>
+    <rect x="280" y="212" width="170" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="365" y="256" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+    <rect x="450" y="212" width="200" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="550" y="256" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+    <rect x="650" y="212" width="110" height="76" fill="#fef2f2" stroke="#e2e8f0"/><text x="705" y="256" text-anchor="middle" font-size="20" fill="#dc2626">✕</text>
+
+    <!-- trader 1003 -->
+    <rect x="60" y="288" width="220" height="76" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="170" y="320" text-anchor="middle" font-weight="700" fill="#334155">trader-user</text>
+    <text x="170" y="340" text-anchor="middle" fill="#64748b" font-size="12">role_id = 1003</text>
+    <rect x="280" y="288" width="170" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="365" y="332" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+    <rect x="450" y="288" width="200" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="550" y="332" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+    <rect x="650" y="288" width="110" height="76" fill="#dcfce7" stroke="#e2e8f0"/><text x="705" y="332" text-anchor="middle" font-size="22" fill="#16a34a">✓</text>
+  </g>
+
+  <text x="410" y="396" text-anchor="middle" font-size="12" fill="#64748b">✓ = ALLOW（返回真实结果，且工具出现在 tools/list）  ✕ = DENIED（调用被拒，且工具在 tools/list 中不可见）</text>
+</svg>

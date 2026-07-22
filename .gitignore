@@ -1,5 +1,6 @@
 # 部署时生成的中间配置 (含真实账号/资源 ID) — 不提交
 cognito_ids.env
+cognito_ids_ct.env
 authz.json
 rt-authz.json
 rt-header.json

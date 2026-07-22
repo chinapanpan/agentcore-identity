@@ -1,5 +1,12 @@
 # AgentCore Identity 与鉴权全流程 Demo（OKX）
 
+> **📌 你正在看 `cognito-test` 分支。** 本分支在主分支基础上换了一个新场景，**重点教学 Cognito 与自定义 JWT 字段**：
+> 用 **Pre Token Generation Lambda（V2）往 access token 注入自定义 `role_id`**，并以 `role_id`（而非 `cognito:groups`）驱动 Gateway 的 tool 级授权。
+> 完整教学请读 **[COGNITO_GUIDE.md](COGNITO_GUIDE.md)**（含：Cognito 是什么 / 如何注入自定义字段 / MCP client 如何带 Header / Inbound-Outbound Auth）。
+> 下面这份 README 讲的是同一套架构（Runtime→Gateway→Lambda Target + 拦截器/Cedar 双方案），授权信号在本分支为 `role_id`。
+
+---
+
 > 一个**真实部署、真实实测**的端到端示例，回答 OKX 最关心的三个安全问题：
 > 1. 用户调用 **AgentCore Runtime** 时如何做身份认证与鉴权？
 > 2. 从 **Runtime 调用 AgentCore Gateway** 时如何做认证鉴权？
