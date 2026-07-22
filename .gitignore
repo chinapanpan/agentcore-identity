@@ -1,6 +1,10 @@
 # 部署时生成的中间配置 (含真实账号/资源 ID) — 不提交
 cognito_ids.env
 cognito_ids_ct.env
+
+# 含真实账号/资源 ID 的架构图 (仅本机 demo 用; 脱敏版为 img/architecture-overview.svg)
+img/demo-architecture.svg
+img/demo-architecture.png
 authz.json
 rt-authz.json
 rt-header.json
