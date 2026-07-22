@@ -93,19 +93,21 @@ curl -s -X POST "$RT_B_MCP_URL" -H "Authorization: Bearer $TOKEN" -H "Content-Ty
 
 ---
 
-## Step 2 — 【核心·反向】首次调 Gateway 的工具 → 弹出登录 URL
+## Step 2 — 【核心·反向】发起调用 → 弹出登录 URL（一步到位）
 
-**意图**：**这是整个 demo 最有说服力的一步**。用 demo-user token 直连 Gateway 调 `tools/call`，因 Vault 里还没有该用户对下游的授权 token，Gateway 返回 **`-32042`**，里面带一段**登录 URL**。
+**意图**：**这是整个 demo 最有说服力的一步**。调 Gateway 的 `tools/call`，因 Vault 里还没有该用户对下游的授权 token，Gateway 返回 **`-32042`**，里面带一段**登录 URL**。
 
 ```bash
-python3.12 e2e_3lo_test.py first
+python3.12 e2e_3lo_test.py start
 ```
 
-**期望看到**：JSON-RPC `error.code = -32042`，`message="This request requires more information."`，
-`data.elicitations[0].url` = 一段 `https://bedrock-agentcore.us-east-1.amazonaws.com/identities/oauth2/authorize?request_uri=…` 的登录 URL，脚本会高亮打印出来。
-**讲解**：这一步 Gateway 发现该 target 是 `AUTHORIZATION_CODE`（3LO）且 Vault 无缓存 token，就用 MCP 的 **URL elicitation** 机制把"请去这个 URL 登录授权"结构化地返回给调用方。**这就是"出现一段 URL 让用户点开登录"的时刻。**
+**期望看到**：先打印 `① 已预存当前用户 token 到回调服务器 …http 200`，然后高亮打印一段
+`https://bedrock-agentcore.us-east-1.amazonaws.com/identities/oauth2/authorize?request_uri=…` 的登录 URL。
 
-> 说明：脚本默认 `forceAuthentication=True`，保证每次演示都会弹 URL（否则 Vault 已授权时不会弹）。
+**讲解**：Gateway 发现该 target 是 `AUTHORIZATION_CODE`（3LO）且 Vault 无缓存 token，就用 MCP 的 **URL elicitation** (`-32042`) 把"请去这个 URL 登录授权"结构化地返回给调用方。**这就是"出现一段 URL 让用户点开登录"的时刻。**
+
+> ⚠️ **为什么用 `start` 而不是 `first`**：3LO 的 **session 绑定**要求"发起授权的身份 = 完成授权的身份"。`start` 会先把**当前这次调用的 token** 预存到回调服务器（`/userIdentifier/token`），再触发调用——保证点完 URL 后回调能用同一身份完成绑定。若跳过预存（或用了别的旧 token），登录后回调会报 **500 `Invalid or expired session`**。`first` 只演示"弹 URL"、不预存，仅用于讲解，别用它做完整闭环。
+> 脚本默认 `forceAuthentication=True`，保证每次演示都会弹 URL（否则 Vault 已授权时不会弹）。
 
 ---
 
@@ -117,10 +119,15 @@ python3.12 e2e_3lo_test.py first
 python3.12 - <<'PY'
 import os,json,base64,hmac,hashlib,urllib.parse,urllib.request,time,boto3
 R=os.environ["AWS_REGION"];CID=os.environ["CLIENT_ID"];SEC=os.environ["CLIENT_SECRET"]
-U=os.environ["DEMO_USER"];PW=os.environ["DEMO_PASSWORD"];RT=os.environ["RT_A_ARN"]
+U=os.environ["DEMO_USER"];PW=os.environ["DEMO_PASSWORD"];RT=os.environ["RT_A_ARN"];RU=os.environ["RETURN_URL"]
 sh=base64.b64encode(hmac.new(SEC.encode(),(U+CID).encode(),hashlib.sha256).digest()).decode()
 tok=boto3.client("cognito-idp",region_name=R).initiate_auth(AuthFlow="USER_PASSWORD_AUTH",ClientId=CID,
   AuthParameters={"USERNAME":U,"PASSWORD":PW,"SECRET_HASH":sh})["AuthenticationResult"]["AccessToken"]
+# ★关键: 先把当前 token 预存到回调服务器 (session 绑定), 否则点完 URL 回调报 500
+base=RU.rsplit("/",1)[0]
+urllib.request.urlopen(urllib.request.Request(base+"/userIdentifier/token",
+  data=json.dumps({"user_token":tok}).encode(),headers={"Content-Type":"application/json"}),timeout=10).read()
+print("① 已预存当前用户 token 到回调服务器")
 enc=urllib.parse.quote(RT,safe="")
 url=f"https://bedrock-agentcore.{R}.amazonaws.com/runtimes/{enc}/invocations?qualifier=DEFAULT"
 body=json.dumps({"tool":"get_token_price","arguments":{"symbol":"BTC"},"force_auth":True}).encode()
@@ -130,8 +137,8 @@ print(json.dumps(json.loads(urllib.request.urlopen(req,timeout=120).read()),ensu
 PY
 ```
 
-**期望**：返回 `status: "AUTHORIZATION_REQUIRED"` + `authorization_url`（同 Step 2 的登录 URL）+ `message`（提示用户去登录）。
-**讲解**：同一段 Agent 代码，因为下游需 3LO 授权，Agent 把登录 URL 原样透出——用户体验就是"点开这个链接登录后再来"。
+**期望**：先打印 `① 已预存当前用户 token …`，再返回 `status: "AUTHORIZATION_REQUIRED"` + `authorization_url`（同 Step 2 的登录 URL）+ `message`。
+**讲解**：同一段 Agent 代码，因为下游需 3LO 授权，Agent 把登录 URL 原样透出——用户体验就是"点开这个链接登录后再来"。同样**先预存当前 token** 是 session 绑定成功的前提（见 Step 2 的 ⚠️）。
 
 ---
 
@@ -146,11 +153,13 @@ PY
 
 **幕后发生了什么（讲解）**：
 - Cognito 发出 authorization code → AgentCore 用 client_secret 换 access/refresh token；
-- 浏览器带 `session_id` 落到我们的回调服务器 → 它调 `CompleteResourceTokenAuth` 完成 **session 绑定**（证明"发起授权的人=完成授权的人"，防 CSRF）；
+- 浏览器带 `session_id` 落到我们的回调服务器 → 它用 **Step 2/3 预存的那个用户 token** 调 `CompleteResourceTokenAuth` 完成 **session 绑定**（证明"发起授权的人=完成授权的人"，防 CSRF）；
 - token 存入 **AgentCore Token Vault**，按 provider + 用户身份归档。
 
 > 演示自动化验证时，可用无头浏览器脚本替代人工点击（见 `_consent_driver.py`），但**现场建议真人点，最直观**。
 > 注意：登录 URL 有效期约 10 分钟，过期就重跑 Step 2/3 取新的。
+
+> **🛠 若回调页报 `Internal Server Error` / `Invalid or expired session`**：几乎都是 **session 绑定身份对不上**——即点 URL 前没有用 `start`（或 Step 3 的预存）把**本次**的 token 存进回调服务器，或登录 URL 已过期。解决：重跑 `python3.12 e2e_3lo_test.py start` 拿**新的** URL 再点。回调服务器（EC2）已配置：优先用预存 token 绑定，失败时会返回友好的"❌ 授权未完成"页并在 `journalctl -u okx-ob-callback` 打印真实原因。
 
 ---
 

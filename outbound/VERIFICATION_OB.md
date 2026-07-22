@@ -23,5 +23,9 @@
 3. mcpServer target 的 mcpToolSchema.inlinePayload 是 JSON **字符串** {"tools":[...]}。
 4. 回调 EC2 的 IAM 角色需 secretsmanager:GetSecretValue (bedrock-agentcore-identity*)
    + bedrock-agentcore:CompleteResourceTokenAuth, 否则回调 500。
-5. session 绑定: 发起 3LO 前需把发起用户 token POST 到回调服务器 /userIdentifier/token。
+5. session 绑定: 发起 3LO 前**必须**把【本次发起用的同一个 token】POST 到回调服务器
+   /userIdentifier/token。手动演示统一用 `e2e_3lo_test.py start`(预存+触发一步到位);
+   否则点完 URL 回调报 500 `Invalid or expired session`(身份对不上/token 过期)。
+   实测: 用 userId(Cognito sub) 兜底走 dp.complete_resource_token_auth 仍报同错,
+   故绑定身份必须用 userToken 路径。
 6. 未遇到 issue #809 的 -32603; 3LO 打自建 Cognito-backed runtime target 实测可行。

@@ -49,22 +49,25 @@ done
 save CALLBACK_SG "$SG"
 
 echo "==> user-data (bootstrap caddy + callback server)"
+# demo-user 的 Cognito sub, 作为回调 session 绑定的兜底 userId (无预存 token 时)
+DEFAULT_USER_ID=$(aws cognito-idp admin-get-user --region "$AWS_REGION" --user-pool-id "$POOL_ID" \
+  --username "${DEMO_USER:-demo-user}" --query 'UserAttributes[?Name==`sub`].Value | [0]' --output text 2>/dev/null || echo "")
 CB64=$(base64 -w0 callback_server.py)
 cat > /tmp/ob-userdata.sh <<UD
 #!/bin/bash
 set -x
 dnf install -y python3.12 python3.12-pip
-python3.12 -m pip install fastapi uvicorn bedrock-agentcore
+python3.12 -m pip install fastapi uvicorn bedrock-agentcore boto3
 mkdir -p /opt/okx-ob
 echo "$CB64" | base64 -d > /opt/okx-ob/callback_server.py
 
-# callback server systemd
+# callback server systemd (--user-id 作为 session 绑定兜底)
 cat > /etc/systemd/system/okx-ob-callback.service <<SVC
 [Unit]
 Description=okx-ob outbound 3LO callback
 After=network.target
 [Service]
-ExecStart=/usr/bin/python3.12 /opt/okx-ob/callback_server.py --region $AWS_REGION --port 8443
+ExecStart=/usr/bin/python3.12 /opt/okx-ob/callback_server.py --region $AWS_REGION --port 8443 --user-id $DEFAULT_USER_ID
 Restart=always
 [Install]
 WantedBy=multi-user.target

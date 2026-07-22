@@ -104,15 +104,41 @@ def cmd_first(force=True):
     return r
 
 
-def cmd_prestore():
+def _prestore(tok):
     """把发起用户 token 预存到回调服务器 (session 绑定所需)。"""
-    tok = get_token()
     base = os.environ.get("CALLBACK_BASE") or RETURN_URL.rsplit("/", 1)[0]
-    url = base + "/userIdentifier/token"
-    req = urllib.request.Request(url, data=json.dumps({"user_token": tok}).encode(),
+    req = urllib.request.Request(base + "/userIdentifier/token",
+                                 data=json.dumps({"user_token": tok}).encode(),
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=10) as resp:
-        print("prestore ->", resp.status, resp.read().decode())
+        return resp.status
+
+
+def cmd_prestore():
+    print("prestore ->", _prestore(get_token()))
+
+
+def cmd_start():
+    """【推荐·手动演示一步到位】: 预存当前用户 token + 触发 tools/call + 打印登录 URL。
+
+    这是修复手动流程 500 的关键 —— 必须用【发起本次调用的同一个 token】做 session 绑定,
+    所以取 token → 立刻 prestore → 再触发, 三步绑定同一身份。
+    """
+    tok = get_token()
+    st = _prestore(tok)
+    print(f"① 已预存当前用户 token 到回调服务器 (session 绑定用, http {st})")
+    r = invoke_mcp(tok, "tools/call",
+                   {"name": TOOL, "arguments": {"symbol": "BTC"}, "_meta": _meta(True)})
+    url = extract_auth_url(r)
+    if url:
+        print("\n" + "=" * 70)
+        print("🔑 请在浏览器打开下面的 URL 登录 (demo-user / 见 DEMO_PASSWORD) 并同意:")
+        print(url)
+        print("=" * 70)
+        print("授权完成 (看到绿色 ✅ 授权完成 页) 后, 运行: python3.12 e2e_3lo_test.py retry")
+    else:
+        print("未拿到登录 URL, 原始响应:\n", json.dumps(r, ensure_ascii=False, indent=2))
+    return r
 
 
 def cmd_retry():
@@ -126,6 +152,6 @@ def cmd_retry():
 
 
 if __name__ == "__main__":
-    cmd = sys.argv[1] if len(sys.argv) > 1 else "first"
-    {"list": cmd_list, "first": cmd_first, "prestore": cmd_prestore,
-     "retry": cmd_retry}[cmd]()
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "start"
+    {"list": cmd_list, "first": cmd_first, "start": cmd_start,
+     "prestore": cmd_prestore, "retry": cmd_retry}[cmd]()
