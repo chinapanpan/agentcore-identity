@@ -10,6 +10,20 @@
 
 ---
 
+## 部署架构总览
+
+下图是本次测试环境的完整部署架构——从 Cognito 签发带 `role_id` 的 JWT，到 Runtime 上的 Strands Agent 透传 token，再到两个 Gateway 按 `role_id` 做工具级授权。图中标注的都是本次部署的**真实资源名**（与下方资源清单一致）。
+
+![部署架构](img/demo-architecture.png)
+
+**三段式数据流（对应下面 Step 的演示顺序）**：
+
+1. **① 身份签发（Cognito）** — 用户目录里的 `custom:role_id` → Pre-Token-Gen Lambda（V2）注入成 `role_id` claim → 签发到 access token（对应 Step 1–4）。
+2. **② 调用 Agent（Runtime）** — 用户带 JWT 调 Runtime；Runtime 入站校验 JWT，`requestHeaderAllowlist` 放行 `Authorization`，Agent 里的 **MCPClient 把 token 显式注入**发往 Gateway 的 HTTP 头（对应 Step 8）。
+3. **③ 工具授权（Gateway）** — 两个 Gateway 各配 Inbound Auth（JWT 校验，无/伪造 token → 401）+ 工具级授权（A 用拦截器代码、B 用 Cedar 声明式策略），按 `role_id` 决定能调哪些工具；出站用 Gateway 自己的 IAM 角色调 Target Lambda（对应 Step 5–7）。
+
+---
+
 ## 本次部署的资源清单（速查）
 
 | 资源 | 值 |
