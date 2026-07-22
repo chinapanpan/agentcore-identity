@@ -270,6 +270,90 @@ python3.12 mcp_matrix_test_ct.py "$GW_B_URL" cedar
 
 **场景意图**：前面是直连 Gateway 的确定性证据；这一步展示**真实产品形态**——用户带 token 调 Runtime 上的 Agent，Agent 把 token 透传给 Gateway，可用工具集随 role_id 自动变化。
 
+### 8.0 【先讲代码】跑之前，先看懂两段关键代码
+
+> demo 时建议先花两分钟把这两段代码讲清楚——它们是"为什么可用工具会随身份变化"的答案。可以现场 `cat` 出来对着讲。
+
+#### （A）Agent 侧：MCP client 的关键改造（`agent.py`）
+
+**这是本 demo 最核心的一处工程改造**：把入站用户的 token，塞进 Runtime 里 MCP client 发往 Gateway 的 HTTP 头。
+
+现场展示这段代码：
+
+```bash
+sed -n '/★★★/,/return MCPClient/p' agent.py
+```
+
+关键片段（讲解见行内注释）：
+
+```python
+from strands.tools.mcp import MCPClient
+from mcp.client.streamable_http import streamablehttp_client
+
+def _make_mcp_client(user_token):
+    def _transport():
+        return streamablehttp_client(
+            GATEWAY_URL,
+            headers={"Authorization": f"Bearer {user_token}"},   # ← 关键: 把用户 token 注入下游 HTTP 头
+        )
+    return MCPClient(_transport)          # MCPClient 接收一个"传输层工厂", 每次连接调用它
+```
+
+**讲解三句话**：
+1. **MCPClient 默认不会自动透传入站 token** —— 你必须自己把 `Authorization` 头塞进传输层，这就是"改造点"。
+2. `streamablehttp_client(url, headers={...})` 就是塞头的地方；`MCPClient` 接收的是一个**无参工厂函数**（`_transport`），它在每次建连时被调用，于是每次请求都带上同一个用户 token。
+3. 而 `user_token` 从哪来？来自入站请求头——需要 Runtime 先 `requestHeaderAllowlist:["Authorization"]` 放行，Agent 才读得到：
+
+```bash
+sed -n '/def invoke/,/role_id = claims/p' agent.py
+```
+
+```python
+@app.entrypoint
+def invoke(payload, context):
+    auth = context.request_headers.get("Authorization")   # ← 需 Runtime allowlist 放行才拿得到
+    token = auth[len("Bearer "):]
+    claims = _decode_claims(token)
+    username = claims.get("username")
+    role_id = claims.get("role_id")            # ← 就是 Pre-Token-Gen 注入的那个自定义字段
+```
+
+**一句话总结**：`Runtime allowlist 放行 Authorization` ＋ `MCP client 显式注入 header` 两处缺一不可；漏掉任一处，Gateway 入站就 401（对应 GUIDE §4）。
+
+#### （B）测试侧：E2E 脚本怎么"扮演不同用户"调 Runtime（`runtime_e2e_test_ct.py`）
+
+这段脚本模拟"三个不同 C 端用户各自带着自己的 token 来调 Agent"。关键是**用裸 HTTPS + Bearer token** 调 Runtime（boto3 不支持 bearer 方式），以及**每次用唯一 session id 规避 warm 缓存**。
+
+现场展示：
+
+```bash
+sed -n '/^def invoke/,/http_error/p' runtime_e2e_test_ct.py
+```
+
+关键片段：
+
+```python
+def invoke(u, prompt, idx):
+    tok = token(u)                                    # ← 取该用户的 access token (含其 role_id)
+    enc = urllib.parse.quote(RT_ARN, safe="")
+    url = f"https://bedrock-agentcore.{REGION}.amazonaws.com/runtimes/{enc}/invocations?qualifier=DEFAULT"
+    sid = f"okx-ct-{u}-{RUN}-{idx:024d}"              # ← 唯一 session id, 规避 warm 缓存(踩过的坑)
+    body = json.dumps({"prompt": prompt}).encode()
+    req = urllib.request.Request(url, data=body, headers={
+        "Authorization": f"Bearer {tok}",             # ← 用户 token 放入站头, Runtime 入站校验它
+        "Content-Type": "application/json",
+        "X-Amzn-Bedrock-AgentCore-Runtime-Session-Id": sid})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        return json.loads(resp.read())
+```
+
+**讲解三句话**：
+1. `token(u)` 给每个用户取**各自的** access token —— 三个用户的 token 里 `role_id` 不同，这是后面能力差异的根源。
+2. token 放进 `Authorization: Bearer` 头调 Runtime；**必须用裸 HTTPS**（boto3 SDK 不支持 bearer-token 调用方式）。
+3. `X-Amzn-...-Session-Id` 每次用带序号的**唯一值**——因为 Runtime 会复用 warm microVM，固定 session id 会读到旧容器的缓存行为（这是之前踩过的坑）。
+
+返回体里的 `gateway_visible_tools` 和 `tool_trace` 就是证据：同一段 Agent 代码，三个用户拿到的工具集和实际调用完全不同。
+
 ### 8.1 一键跑三用户端到端
 
 ```bash
