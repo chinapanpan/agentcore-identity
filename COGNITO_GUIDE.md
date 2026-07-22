@@ -14,6 +14,7 @@
 
 ## 目录
 
+- [0. 部署架构总览](#0-部署架构总览)
 - [1. Cognito 是什么](#1-cognito-是什么)
 - [2. 三种令牌：ID / Access / Refresh Token](#2-三种令牌id--access--refresh-token)
 - [3. 【重点】如何往 JWT 注入自定义字段 role_id](#3-重点如何往-jwt-注入自定义字段-role_id)
@@ -27,6 +28,22 @@
 - [7. 正反用例实测结果](#7-正反用例实测结果)
 - [8. 复现步骤](#8-复现步骤)
 - [9. 资源清理](#9-资源清理)
+
+---
+
+## 0. 部署架构总览
+
+在深入每个知识点之前，先用一张图看清整套 Demo 的部署架构与数据流。它把后文的 §1–§7 串成一条完整链路：
+
+![部署架构总览](img/architecture-overview.svg)
+
+**三段式数据流（对应后文各节）**：
+
+1. **① 身份签发 · Amazon Cognito**（对应 [§1](#1-cognito-是什么)–[§3](#3-重点如何往-jwt-注入自定义字段-role_id)）：用户目录里的 `custom:role_id` 属性 → Pre-Token-Gen Lambda（V2_0）在签发前读取并注入成 `role_id` claim → 写进 access token。这是「往 JWT 注入自定义字段」的核心。
+2. **② 调用 Agent · AgentCore Runtime**（对应 [§4](#4-重点runtime-里的-mcp-client-要怎么改才能带-header)）：用户带 JWT 调 Runtime，Runtime 入站校验 JWT 并经 `requestHeaderAllowlist` 放行 `Authorization`；Agent 里的 **MCPClient 必须显式把 token 注入**发往 Gateway 的 HTTP 头——这是用户最关心的「MCP client 要不要改造」的答案（答案：要）。
+3. **③ 工具授权 · AgentCore Gateway**（对应 [§5](#5-重点gateway-的-inbound-auth-与-outbound-auth)–[§7](#7-正反用例实测结果)）：两个 Gateway 各配 **Inbound Auth**（CUSTOM_JWT，无/伪造 token → 401）+ 工具级授权（A 用拦截器代码、B 用 Cedar 声明式策略），按 `role_id` 决定能调哪些工具；**Outbound Auth** 用 Gateway 自己的 IAM 角色去调 Target Lambda。两种授权机制在同一批 token 下结果完全一致。
+
+> 图中资源名（`okx-ct-*`、`<POOL_ID>` 等）为本教学示例的部署形态，账号/资源 ID 已脱敏；真实值仅在本机的部署产物 `cognito_ids_ct.env` 中，不入库。
 
 ---
 
