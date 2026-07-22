@@ -53,12 +53,15 @@ del aws ecr delete-repository $R --repository-name okx-ct-agent --force
 echo "==> 7) 删除 Runtime 日志组"
 [ -n "${RT_ARN:-}" ] && del aws logs delete-log-group $R --log-group-name "/aws/bedrock-agentcore/runtimes/${RT_ARN##*/}-DEFAULT"
 
-echo "==> 8) 删除 IAM 角色 (先删内联策略/解绑托管策略)"
-del aws iam delete-role-policy --role-name okx-ct-gateway-role --policy-name okx-ct-gw
-del aws iam delete-role --role-name okx-ct-gateway-role
-del aws iam delete-role-policy --role-name okx-ct-runtime-role --policy-name okx-ct-rt
-del aws iam delete-role --role-name okx-ct-runtime-role
-del aws iam detach-role-policy --role-name okx-ct-lambda-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-del aws iam delete-role --role-name okx-ct-lambda-role
+echo "==> 8) 删除 IAM 角色 (动态删所有内联策略 + 解绑所有托管策略, 避免策略名不一致导致残留)"
+for role in okx-ct-gateway-role okx-ct-runtime-role okx-ct-lambda-role; do
+  for pol in $(aws iam list-role-policies --role-name "$role" --query 'PolicyNames' --output text 2>/dev/null); do
+    del aws iam delete-role-policy --role-name "$role" --policy-name "$pol"
+  done
+  for arn in $(aws iam list-attached-role-policies --role-name "$role" --query 'AttachedPolicies[].PolicyArn' --output text 2>/dev/null); do
+    del aws iam detach-role-policy --role-name "$role" --policy-arn "$arn"
+  done
+  del aws iam delete-role --role-name "$role"
+done
 
 echo "==> 清理完成。建议手动复核: Gateway / Runtime / Cognito / ECR / Policy Engine 是否已空。"
