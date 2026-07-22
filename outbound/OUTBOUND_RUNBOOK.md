@@ -19,26 +19,28 @@
 >
 > **主线（一句话）**：Agent 去调 MCP 工具 → 因未授权，弹出一段**登录 URL** → 用户点开、在 Cognito 登录同意 → Agent 重试即成功。
 >
-> **演示区域**：`us-east-1` ｜ **账号**：`340636688520`
+> **演示区域**：`us-east-1` ｜ **账号**：`<ACCOUNT_ID>`
+
+> 🔒 **说明**：下表用占位符（`<...>`）代替真实的账号 ID、Pool/Client ID、ARN、EIP 等。**本次部署的真实值全部在 `ob_ids.env`（已 gitignore、不入库）**，跑命令时由 `set -a; source ob_ids.env; set +a` 自动注入，无需手填。要查真实值：`cat ob_ids.env`。
 
 ---
 
 ## 本次部署的资源清单（速查）
 
-| 资源 | 值 |
-|------|----|
-| Cognito User Pool（授权服务器） | `us-east-1_D9GxixyVC`（ESSENTIALS，带 Hosted UI） |
-| Hosted UI 域名 | `https://okx-ob-688520.auth.us-east-1.amazoncognito.com` |
-| App Client（带 secret，code grant） | `5tq13k2uvhtr451s5q74vihi0` |
-| Resource Server scope | `okx-mcp/invoke` |
-| **AgentCore OAuth2 Credential Provider** | `okx-ob-cognito-provider` |
-| AgentCore callback URL（已回填 Cognito） | `…/identities/oauth2/callback/9751974d-…` |
-| **Runtime B（受保护 MCP Server）** | `arn:aws:bedrock-agentcore:us-east-1:340636688520:runtime/okx_ob_mcpserver-66faIiBfdR` |
-| **MCP Gateway（outbound 3LO）** | `https://okx-ob-gateway-apmzxkiab4.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp` |
-| Gateway target（mcpServer，AUTHORIZATION_CODE） | `okxmcp`（id `VYGWJZ4KZL`） |
-| **Runtime A（Agent，产品入口）** | `arn:aws:bedrock-agentcore:us-east-1:340636688520:runtime/okx_ob_agent-FJP3rb8S4C` |
-| **回调服务器（独立 EC2）** | `https://callback.chrisai.blog/callback`（EIP `54.209.241.213`，`i-00591fc0cf2c24c81`） |
-| demo 用户 | `demo-user` / 密码 `OkxDemo#2026` |
+| 资源 | 值（占位符；真实值见 `ob_ids.env`） | env 变量 |
+|------|----|----|
+| Cognito User Pool（授权服务器） | `us-east-1_<POOL>`（ESSENTIALS，带 Hosted UI） | `POOL_ID` |
+| Hosted UI 域名 | `https://okx-ob-<xxxxxx>.auth.us-east-1.amazoncognito.com` | `HOSTED_UI` |
+| App Client（带 secret，code grant） | `<CLIENT_ID>` | `CLIENT_ID` |
+| Resource Server scope | `okx-mcp/invoke` | `RESOURCE_SCOPE` |
+| **AgentCore OAuth2 Credential Provider** | `okx-ob-cognito-provider` | `PROVIDER_ARN` |
+| AgentCore callback URL（已回填 Cognito） | `…/identities/oauth2/callback/<uuid>` | `CALLBACK_URL` |
+| **Runtime B（受保护 MCP Server）** | `arn:aws:bedrock-agentcore:us-east-1:<ACCOUNT_ID>:runtime/okx_ob_mcpserver-<id>` | `RT_B_ARN` |
+| **MCP Gateway（outbound 3LO）** | `https://okx-ob-gateway-<id>.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp` | `GW_URL` |
+| Gateway target（mcpServer，AUTHORIZATION_CODE） | `okxmcp`（id `<TARGET_ID>`） | `TARGET_ID` |
+| **Runtime A（Agent，产品入口）** | `arn:aws:bedrock-agentcore:us-east-1:<ACCOUNT_ID>:runtime/okx_ob_agent-<id>` | `RT_A_ARN` |
+| **回调服务器（独立 EC2）** | `https://callback.chrisai.blog/callback`（EIP `<EIP>`，`i-<instance>`） | `CALLBACK_EIP` / `CALLBACK_IID` |
+| demo 用户 | `demo-user` / 密码 `<DEMO_PASSWORD>` | `DEMO_USER` / `DEMO_PASSWORD` |
 
 **演示目标（正反用例）**：
 
@@ -154,7 +156,7 @@ PY
 
 1. 复制 Step 2 或 Step 3 输出里的 `authorization_url`。
 2. 浏览器打开 → 自动跳转到 Cognito Hosted UI 登录页。
-3. 输入 `demo-user` / `OkxDemo#2026` → 提交。
+3. 输入 `demo-user` / `<DEMO_PASSWORD>`（真实密码见 `ob_ids.env` 的 `DEMO_PASSWORD`）→ 提交。
 4. 浏览器依次经过：Cognito → AgentCore callback → **重定向到 `https://callback.chrisai.blog/callback`**，看到绿色「✅ 授权完成」页面。
 
 **幕后发生了什么（讲解）**：
@@ -232,4 +234,4 @@ curl -s https://callback.chrisai.blog/ping; echo
 4. 用户重试 → Gateway 用 Vault 的 token 调下游 → **成功返回业务结果**（Step 5/6）。
 5. 之后二次调用命中 Vault，**不再打扰用户**。
 
-*本手册参数为 us-east-1 / 账号 340636688520 本次部署真实值；资源清理（`cleanup_ob.sh`）后失效。*
+*本手册用占位符代替真实标识；真实值在 `ob_ids.env`（未入库），区域 us-east-1；资源清理（`cleanup_ob.sh`）后失效。*

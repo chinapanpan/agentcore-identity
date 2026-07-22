@@ -9,7 +9,7 @@
 <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.10"/></filter>
 </defs>
 <rect width="1180" height="760" fill="#ffffff"/>
-<text x="40" y="46" class="title">AgentCore Gateway Outbound OAuth 3LO — 部署架构 (us-east-1 / 340636688520)</text>
+<text x="40" y="46" class="title">AgentCore Gateway Outbound OAuth 3LO — 部署架构 (us-east-1 / &lt;ACCOUNT_ID&gt;)</text>
 <text x="40" y="70" class="sub">Agent → Gateway → Agent：未授权时弹登录 URL，用户在 Cognito 授权后 token 入 Token Vault，重试即成功</text>
 <rect x="360" y="96" width="784" height="556" rx="12" fill="none" stroke="#9ca3af" stroke-width="1.4" stroke-dasharray="6,4"/>
 <text x="380" y="120" class="reg">AWS us-east-1 · Bedrock AgentCore</text>
@@ -43,7 +43,7 @@
 <text x="1030.0" y="400" class="s" text-anchor="middle">3 个 mock 工具</text>
 <rect x="400" y="150" width="300" height="96" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" filter="url(#sh)"/>
 <text x="550.0" y="172" class="t" text-anchor="middle">Cognito 授权服务器 (Hosted UI)</text>
-<text x="550.0" y="190" class="s" text-anchor="middle">us-east-1_D9GxixyVC · App Client(secret, code grant)</text>
+<text x="550.0" y="190" class="s" text-anchor="middle">us-east-1_&lt;POOL&gt; · App Client(secret, code grant)</text>
 <text x="550.0" y="205" class="s" text-anchor="middle">Resource Server scope: okx-mcp/invoke</text>
 <rect x="740" y="150" width="180" height="96" rx="8" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1.5" filter="url(#sh)"/>
 <text x="830.0" y="172" class="t" text-anchor="middle">AgentCore Identity</text>

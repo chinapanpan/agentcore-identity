@@ -7,7 +7,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 export AWS_REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
-PW="${DEMO_PASSWORD:-OkxDemo#2026}"
+# demo 用户密码: 优先用环境变量 DEMO_PASSWORD; 未提供则随机生成一个 (不硬编码到仓库)
+PW="${DEMO_PASSWORD:-Okx$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9')#9}"
 PY="${PY:-python3.12}"
 ENVF=ob_ids.env
 : > "$ENVF"; save(){ echo "$1=$2" >> "$ENVF"; }

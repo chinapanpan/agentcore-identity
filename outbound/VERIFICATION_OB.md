@@ -1,4 +1,4 @@
-# outbound 3LO 端到端验证结果 (us-east-1, 账号 340636688520)
+# outbound 3LO 端到端验证结果 (us-east-1, 账号 <ACCOUNT_ID>)
 
 验证日期: 2026-07-22 | 分支: identity-outbound
 
