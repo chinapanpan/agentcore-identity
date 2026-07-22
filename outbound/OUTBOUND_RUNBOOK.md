@@ -1,5 +1,13 @@
 # Outbound OAuth 3LO — 人工 Live Demo 手册（可直接复制执行）
 
+## 本次部署环境架构图
+
+![Outbound OAuth 3LO 部署架构](img/outbound-architecture.svg)
+
+> 上图为本次 us-east-1 实际部署的资源与调用流：底部 `用户 → Runtime A(Agent) → MCP Gateway → Runtime B(受保护 MCP Server)` 是主链路；顶部 `Cognito 授权服务器 / AgentCore Identity(Credential Provider + Token Vault) / 回调 EC2` 是 3LO 授权侧。序号 ①–⑦ 对应下方 Step。
+
+---
+
 > 配合 [OUTBOUND_GUIDE.md](OUTBOUND_GUIDE.md)：**GUIDE 讲原理，本手册给"直接能跑"的命令**。
 > 参数**已填好本次部署的真实值**，在这台已配好 AWS 凭证的机器（`/home/ec2-user/agentcore-outbound/identity/outbound`）逐条复制粘贴即可。
 >
