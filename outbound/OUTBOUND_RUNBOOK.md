@@ -6,6 +6,12 @@
 
 > 上图为本次 us-east-1 实际部署的资源与调用流：底部 `用户 → Runtime A(Agent) → MCP Gateway → Runtime B(受保护 MCP Server)` 是主链路；顶部 `Cognito 授权服务器 / AgentCore Identity(Credential Provider + Token Vault) / 回调 EC2` 是 3LO 授权侧。序号 ①–⑦ 对应下方 Step。
 
+### 精确时序图（各方消息顺序）
+
+![Outbound OAuth 3LO 时序图](img/outbound-sequence.svg)
+
+> 时序图覆盖七方三阶段（前置预存 / 授权 / 重试），并在底部标注了 **AgentCore Identity（换token·存Vault·绑定）与 回调服务（仅转发 session_id 触发绑定）的分工**。原理详解见 [OUTBOUND_GUIDE.md §5.5 / §6.5](OUTBOUND_GUIDE.md)；关键代码解读见 [OUTBOUND_GUIDE.md §9](OUTBOUND_GUIDE.md)。
+
 ---
 
 > 配合 [OUTBOUND_GUIDE.md](OUTBOUND_GUIDE.md)：**GUIDE 讲原理，本手册给"直接能跑"的命令**。

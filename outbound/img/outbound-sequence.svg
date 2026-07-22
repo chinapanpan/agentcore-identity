@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1240" width="1500" height="1240">
+<style>text{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;}.head{font-size:13.5px;fill:#111827;font-weight:600;}.headsub{font-size:10.5px;fill:#6b7280;}.msg{font-size:12px;fill:#111827;}.note{font-size:11px;fill:#6b7280;}.phase{font-size:13px;fill:#9333ea;font-weight:600;}.title{font-size:20px;fill:#111827;font-weight:600;}.sub{font-size:12.5px;fill:#6b7280;}</style>
+<defs>
+<marker id="a-blue" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#2563eb"/></marker>
+<marker id="a-red" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#dc2626"/></marker>
+<marker id="a-green" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#16a34a"/></marker>
+<marker id="a-purple" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#9333ea"/></marker>
+<marker id="a-orange" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#ea580c"/></marker>
+<marker id="a-gray" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#6b7280"/></marker>
+</defs>
+<rect width="1500" height="1240" fill="#ffffff"/>
+<text x="40" y="40" class="title">Outbound OAuth 3LO 精确时序图 (us-east-1 实测流程)</text>
+<text x="40" y="62" class="sub">重点看 AgentCore Identity (换token/存Vault/绑定) 与 回调服务(仅转发session_id触发绑定) 的分工</text>
+<rect x="35.0" y="88" width="150" height="46" rx="7" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.5"/>
+<text x="110" y="108" class="head" text-anchor="middle">用户 / 浏览器</text>
+<text x="110" y="125" class="headsub" text-anchor="middle">(C端用户)</text>
+<line x1="110" y1="134" x2="110" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="255.0" y="88" width="150" height="46" rx="7" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+<text x="330" y="108" class="head" text-anchor="middle">Runtime A</text>
+<text x="330" y="125" class="headsub" text-anchor="middle">Agent</text>
+<line x1="330" y1="134" x2="330" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="472.0" y="88" width="176" height="46" rx="7" fill="#faf5ff" stroke="#9333ea" stroke-width="1.5"/>
+<text x="560" y="108" class="head" text-anchor="middle">MCP Gateway</text>
+<text x="560" y="125" class="headsub" text-anchor="middle">(出站3LO)</text>
+<line x1="560" y1="134" x2="560" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="712.0" y="88" width="176" height="46" rx="7" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="800" y="108" class="head" text-anchor="middle">AgentCore Identity</text>
+<text x="800" y="125" class="headsub" text-anchor="middle">Cred Provider+Vault</text>
+<line x1="800" y1="134" x2="800" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="975.0" y="88" width="150" height="46" rx="7" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+<text x="1050" y="108" class="head" text-anchor="middle">Cognito</text>
+<text x="1050" y="125" class="headsub" text-anchor="middle">第三方 IdP / 授权服务器</text>
+<line x1="1050" y1="134" x2="1050" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="1175.0" y="88" width="150" height="46" rx="7" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="1250" y="108" class="head" text-anchor="middle">回调服务</text>
+<text x="1250" y="125" class="headsub" text-anchor="middle">独立EC2</text>
+<line x1="1250" y1="134" x2="1250" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="1345.0" y="88" width="150" height="46" rx="7" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+<text x="1420" y="108" class="head" text-anchor="middle">Runtime B</text>
+<text x="1420" y="125" class="headsub" text-anchor="middle">MCP Server</text>
+<line x1="1420" y1="134" x2="1420" y2="1150" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="4,4"/>
+<rect x="60" y="132" width="1400" height="64" rx="6" fill="#faf5ff" opacity="0.5"/>
+<text x="72" y="149" class="phase">阶段 0 · 前置：发起前预存用户身份（session 绑定的关键）</text>
+<line x1="330" y1="178" x2="1250" y2="178" stroke="#6b7280" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-gray)"/>
+<text x="790.0" y="172" class="msg" text-anchor="middle">⓪ 预存【本次发起用户的 access token】(POST /userIdentifier/token)</text>
+<rect x="60" y="206" width="1400" height="516" rx="6" fill="#faf5ff" opacity="0.5"/>
+<text x="72" y="223" class="phase">阶段 1 · 授权（首次调用 → 弹登录 URL → 用户同意 → token 入 Vault）</text>
+<line x1="110" y1="236" x2="330" y2="236" stroke="#2563eb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<text x="220.0" y="230" class="msg" text-anchor="middle">① invoke(工具) + Bearer 用户token</text>
+<line x1="330" y1="282" x2="560" y2="282" stroke="#2563eb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<text x="445.0" y="276" class="msg" text-anchor="middle">② tools/call (_meta: returnUrl, forceAuth)</text>
+<line x1="560" y1="328" x2="800" y2="328" stroke="#9333ea" stroke-width="1.6" marker-end="url(#a-purple)"/>
+<text x="680.0" y="322" class="msg" text-anchor="middle">③ 查 Token Vault: 有该用户下游 token?</text>
+<line x1="800" y1="374" x2="560" y2="374" stroke="#9333ea" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-purple)"/>
+<text x="680.0" y="368" class="msg" text-anchor="middle">④ 无 → 生成授权URL + session</text>
+<line x1="560" y1="420" x2="330" y2="420" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-red)"/>
+<text x="445.0" y="414" class="msg" text-anchor="middle">⑤ -32042 URL elicitation (含登录URL)</text>
+<line x1="330" y1="466" x2="110" y2="466" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-red)"/>
+<text x="220.0" y="460" class="msg" text-anchor="middle">⑥ 透出登录 URL 给用户</text>
+<line x1="110" y1="512" x2="1050" y2="512" stroke="#ea580c" stroke-width="1.6" marker-end="url(#a-orange)"/>
+<text x="580.0" y="506" class="msg" text-anchor="middle">⑦ 打开URL→登录+同意 (经 Identity /authorize 跳转)</text>
+<line x1="1050" y1="558" x2="800" y2="558" stroke="#ea580c" stroke-width="1.6" marker-end="url(#a-orange)"/>
+<text x="925.0" y="552" class="msg" text-anchor="middle">⑧ 回调 authorization code</text>
+<line x1="800" y1="604" x2="1050" y2="604" stroke="#9333ea" stroke-width="1.6" marker-end="url(#a-purple)"/>
+<text x="925.0" y="598" class="msg" text-anchor="middle">⑨ 用 code + client_secret 换 access/refresh token</text>
+<line x1="800" y1="650" x2="110" y2="650" stroke="#ea580c" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-orange)"/>
+<text x="455.0" y="644" class="msg" text-anchor="middle">⑩ 302 重定向到 defaultReturnUrl (+ session_id)</text>
+<line x1="110" y1="696" x2="1250" y2="696" stroke="#ea580c" stroke-width="1.6" marker-end="url(#a-orange)"/>
+<text x="680.0" y="690" class="msg" text-anchor="middle">⑪ GET /callback?session_id=…</text>
+<line x1="1250" y1="742" x2="800" y2="742" stroke="#dc2626" stroke-width="1.6" marker-end="url(#a-red)"/>
+<text x="1025.0" y="736" class="msg" text-anchor="middle">⑫ CompleteResourceTokenAuth(session_id, 预存的用户token)</text>
+<path d="M 800 780 h 46 v 18 h -46" fill="none" stroke="#9333ea" stroke-width="1.5" marker-end="url(#a-purple)"/>
+<text x="854" y="786" class="note">⑬ 校验身份一致(防CSRF) 后 token 存入 Token Vault</text>
+<line x1="1250" y1="818" x2="110" y2="818" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-red)"/>
+<text x="680.0" y="812" class="msg" text-anchor="middle">⑭ 返回「授权完成」页</text>
+<rect x="60" y="856" width="1400" height="328" rx="6" fill="#faf5ff" opacity="0.5"/>
+<text x="72" y="873" class="phase">阶段 2 · 重试（Vault 命中，直达受保护 MCP，返回业务结果）</text>
+<line x1="110" y1="886" x2="330" y2="886" stroke="#2563eb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<text x="220.0" y="880" class="msg" text-anchor="middle">⑮ retry 同一次调用 + Bearer</text>
+<line x1="330" y1="932" x2="560" y2="932" stroke="#2563eb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<text x="445.0" y="926" class="msg" text-anchor="middle">⑯ tools/call (forceAuth=false)</text>
+<line x1="560" y1="978" x2="800" y2="978" stroke="#9333ea" stroke-width="1.6" marker-end="url(#a-purple)"/>
+<text x="680.0" y="972" class="msg" text-anchor="middle">⑰ 取 Vault token → 命中(过期则用refresh续)</text>
+<line x1="800" y1="1024" x2="560" y2="1024" stroke="#9333ea" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-purple)"/>
+<text x="680.0" y="1018" class="msg" text-anchor="middle">    返回下游 access token</text>
+<line x1="560" y1="1070" x2="1420" y2="1070" stroke="#16a34a" stroke-width="1.6" marker-end="url(#a-green)"/>
+<text x="990.0" y="1064" class="msg" text-anchor="middle">⑱ 调用工具 + Bearer(Vault token)</text>
+<line x1="1420" y1="1116" x2="560" y2="1116" stroke="#16a34a" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-green)"/>
+<text x="990.0" y="1110" class="msg" text-anchor="middle">    业务结果 (入站JWT校验通过)</text>
+<line x1="560" y1="1162" x2="110" y2="1162" stroke="#16a34a" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#a-green)"/>
+<text x="335.0" y="1156" class="msg" text-anchor="middle">⑲ 结果经 Runtime A 返回给用户</text>
+<rect x="60" y="1182" width="1400" height="44" rx="6" fill="#f9fafb" stroke="#e5e7eb"/>
+<text x="74" y="1202" class="note" style="font-size:11.5px">分工：<tspan fill="#7c3aed" font-weight="600">AgentCore Identity</tspan> = OAuth Client 大脑（生成授权URL·换token·存Vault·⑬完成绑定）；<tspan fill="#dc2626" font-weight="600">回调服务(EC2)</tspan> = 瘦转发器（仅⑪接住浏览器重定向、⑫把 session_id+用户身份回传 Identity 触发绑定，本身不持有/不换任何 token）。</text>
+<text x="74" y="1218" class="note" style="font-size:11.5px">Cognito 只负责“登录+同意+发code/token”；真正把 token 收进 Vault、并做 CSRF 绑定校验的是 Identity。回调服务存在的唯一理由：浏览器同意后需要一个公网HTTPS落点来触发 ⑫。</text>
+</svg>
