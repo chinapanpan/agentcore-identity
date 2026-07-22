@@ -15,11 +15,11 @@
 ## 目录
 
 - [1. 场景与拓扑](#1-场景与拓扑)
+- [1.5 端到端时序总览](#15-端到端时序总览)
 - [2. Inbound vs Outbound Auth](#2-inbound-vs-outbound-auth)
 - [3. 2LO vs 3LO](#3-2lo-vs-3lo)
 - [4. 【重点】OAuth2 Credential Provider ≠ Cognito](#4-重点oauth2-credential-provider--cognito)
 - [5. 【重点】-32042 URL Elicitation：登录 URL 怎么抛出来的](#5-重点-32042-url-elicitation登录-url-怎么抛出来的)
-- [5.5 精确时序图](#55-精确时序图)
 - [6. Token Vault 与 Session 绑定](#6-token-vault-与-session-绑定)
 - [6.5 【重点】AgentCore Identity 的作用 & 与回调服务的分工](#65-重点agentcore-identity-的作用--与回调服务的分工)
 - [7. 为什么下游用 Runtime 承载 MCP Server](#7-为什么下游用-runtime-承载-mcp-server)
@@ -46,6 +46,19 @@
 ```
 
 一句话：**agent → gateway → agent**，中间那跳的"出站授权"需要用户亲自点 URL 授权一次。
+
+---
+
+## 1.5 端到端时序总览
+
+在深入各组件前，先用一张**精确时序图**建立全局印象。它覆盖 user/浏览器、Runtime A、MCP Gateway、AgentCore Identity、第三方 IdP(Cognito)、回调服务、Runtime B 七方，分三个阶段（前置预存 / 授权 / 重试）。后续 §2–§9 都是对这张图各段的展开——**尤其注意紫色的 AgentCore Identity 与红色的回调服务各自做了什么**（分工详见 §6.5）。
+
+![Outbound OAuth 3LO 时序图](img/outbound-sequence.svg)
+
+一句话读图：
+- **阶段 0（⓪）**：发起前先把「本次发起用户的 token」预存到回调服务（session 绑定的锚点，漏了这步 → 后面 ⑫ 报 500）。
+- **阶段 1（①–⑭）授权**：调用 → Gateway 查 Vault 无 token → Identity 生成授权 URL → Gateway 用 `-32042` 抛给用户 → 用户在 Cognito 登录同意 → Identity 换 token → 浏览器落到回调服务 → 回调触发 Identity 完成 **session 绑定并把 token 存进 Vault**。
+- **阶段 2（⑮–⑲）重试**：Gateway 命中 Vault token → 作为 Bearer 调 Runtime B → 过其入站 JWT 校验 → 返回业务结果。
 
 ---
 
@@ -126,19 +139,6 @@ aws bedrock-agentcore-control create-oauth2-credential-provider \
 - 请求要带头 `MCP-Protocol-Version: 2025-11-25` 和 `Accept: application/json, text/event-stream`，否则报 `-32022`。
 - 可用 `params._meta` 覆盖：`returnUrl`（临时改回调）、`forceAuthentication:true`（清 Vault，强制每次弹 URL，**演示利器**）。
 - Strands 旧版 `MCPClient` 会把 `-32042` 吞成一句话丢掉 URL（sdk-python #1742，PR #1745 修复）。本 demo 的 Runtime A 用裸 MCP 发 `tools/call` 并自己解析 `elicitations[].url`，保证稳定拿到登录 URL。
-
----
-
-## 5.5 精确时序图
-
-下图是本次 us-east-1 实测流程的**精确时序**，覆盖 user/浏览器、Runtime A、MCP Gateway、AgentCore Identity、第三方 IdP(Cognito)、回调服务、Runtime B 七方，分三个阶段（前置预存 / 授权 / 重试）。**重点看紫色的 AgentCore Identity 与红色的回调服务各自做了什么**（详见 §6.5）。
-
-![Outbound OAuth 3LO 时序图](img/outbound-sequence.svg)
-
-一句话读图：
-- **阶段 0（⓪）**：发起前先把「本次发起用户的 token」预存到回调服务（session 绑定的锚点，漏了这步 → 后面 ⑫ 报 500）。
-- **阶段 1（①–⑭）授权**：调用 → Gateway 查 Vault 无 token → Identity 生成授权 URL → Gateway 用 `-32042` 抛给用户 → 用户在 Cognito 登录同意 → Identity 换 token → 浏览器落到回调服务 → 回调触发 Identity 完成 **session 绑定并把 token 存进 Vault**。
-- **阶段 2（⑮–⑲）重试**：Gateway 命中 Vault token → 作为 Bearer 调 Runtime B → 过其入站 JWT 校验 → 返回业务结果。
 
 ---
 
