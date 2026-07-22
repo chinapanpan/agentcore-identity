@@ -24,3 +24,8 @@ __pycache__/
 def_test.json
 def_test2.json
 defg.json
+
+# outbound 3LO secrets/state
+outbound/ob_ids.env
+outbound/evidence_*.json
+outbound/__pycache__/
